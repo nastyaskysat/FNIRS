@@ -26,6 +26,15 @@ class SerialDataReader:
         self.status_callbacks = []
         
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            )
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
     
     def add_data_callback(self, callback):
         self.data_callbacks.append(callback)
@@ -39,7 +48,10 @@ class SerialDataReader:
     def _notify_data_callbacks(self, timestamp, pin, intensity):
         for callback in self.data_callbacks:
             try:
-                callback(timestamp, pin, intensity)
+                if hasattr(callback, 'emit'):
+                    callback.emit(timestamp, pin, intensity)
+                else:
+                    callback(timestamp, pin, intensity)
             except Exception as e:
                 self.logger.error(f"Ошибка в колбэке данных: {e}")
     
@@ -58,6 +70,8 @@ class SerialDataReader:
                 self.logger.error(f"Ошибка в колбэке статуса: {e}")
     
     def start(self):
+        print("SerialDataReader.start() вызван")
+        self.logger.info("Метод start() вызван")
         if self.running:
             self.logger.warning("Чтение данных уже запущено")
             return
@@ -108,12 +122,14 @@ class SerialDataReader:
     def _read_loop(self):
         while self.running:
             try:
+                self.logger.info(f"Цикл чтения: in_waiting = {self.serial_connection.in_waiting}")
                 if self.serial_connection.in_waiting > 0:
                     line = self.serial_connection.readline().decode('utf-8', errors='ignore').strip()
+                    self.logger.info(f"Прочитана строка: '{line}'")
                     if line:
                         self._parse_data_line(line)
                 else:
-                    time.sleep(0.01)  
+                    time.sleep(0.01)
                     
             except serial.SerialException as e:
                 error_msg = f"Ошибка чтения данных: {str(e)}"
@@ -127,18 +143,38 @@ class SerialDataReader:
                 break
     
     def _parse_data_line(self, line):
+        self.logger.info(f"Получена строка данных: '{line}'")
+        
+        if 'Time(s:ms)' in line or 'Active Pin' in line or '---' in line or line.strip() == '':
+            self.logger.info("Игнорируем заголовок или разделитель")
+            return
+            
         try:
-            parts = line.split('\t')
+            parts = [part.strip() for part in line.split() if part.strip()]
+            self.logger.info(f"Разделенные части: {parts}")
+            
             if len(parts) >= 3:
-                current_time = time.time() - self.start_time
+                time_str = parts[0]
+                if ':' in time_str:
+                    time_parts = time_str.split(':')
+                    seconds = float(time_parts[0])
+                    milliseconds = float(time_parts[1])
+                    current_time = seconds + milliseconds / 1000.0
+                else:
+                    current_time = float(time_str)
+                
                 pin = int(parts[1])
                 intensity = float(parts[2])
+                
+                self.logger.info(f"Обработанные данные: время={current_time}, пин={pin}, интенсивность={intensity}")
                 
                 if pin == 3:  # 780 нм
                     self.time_buffer.append(current_time)
                     self.pin3_buffer.append(intensity)
+                    self.logger.info("Добавлены данные для 780 нм")
                 elif pin == 4:  # 850 нм
                     self.pin4_buffer.append(intensity)
+                    self.logger.info("Добавлены данные для 850 нм")
                 
                 self._notify_data_callbacks(current_time, pin, intensity)
                 

@@ -54,9 +54,9 @@ class FNIRSMainWindow(QMainWindow):
 
         self.init_ui()
         
-        self.analyzer.add_data_update_callback(self.on_analyzer_data_update)
-        self.analyzer.add_status_update_callback(self.on_analyzer_status_update)
-        self.analyzer.add_error_callback(self.on_analyzer_error)
+        self.analyzer.data_updated.connect(self.on_analyzer_data_update)
+        self.analyzer.status_updated.connect(self.on_analyzer_status_update)
+        self.analyzer.error_occurred.connect(self.on_analyzer_error)
     
     def init_ui(self):
         self.setWindowTitle('FNIRS Анализатор - Система мониторинга гемоглобина')
@@ -377,8 +377,9 @@ class FNIRSMainWindow(QMainWindow):
                 QMessageBox.warning(self, "Ошибка", "Не удалось сохранить график")
     
     def on_analyzer_data_update(self, data):
-        pass
-    
+        print(f"Получены данные для обновления графиков: {data}")
+        
+   
     def on_analyzer_status_update(self, status):
         self.status_label.setText(status)
     

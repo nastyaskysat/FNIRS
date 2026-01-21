@@ -2,6 +2,7 @@ import sys
 import os
 import argparse
 from pathlib import Path
+import logging
 
 
 project_root = Path(__file__).parent
@@ -11,6 +12,15 @@ def setup_qt_environment():
     print("Библиотека libxcb-cursor0 установлена, используем стандартный плагин xcb")
 
 def run_gui():
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(),
+            logging.FileHandler('fnirs_analyzer.log', encoding='utf-8')
+        ]
+    )
+    
     setup_qt_environment()
     
     try:

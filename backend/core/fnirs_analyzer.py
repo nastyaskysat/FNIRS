@@ -1,14 +1,20 @@
 import logging
 import time
 from typing import Optional, Dict, Any, Callable
+import numpy as np
+from PySide6.QtCore import QObject, Signal
 
 from backend.serial.serial_reader import SerialDataReader
 from backend.analysis.data_processor import DataProcessor
 
 
-class FNIRSAnalyzer:
+class FNIRSAnalyzer(QObject):
+    data_updated = Signal(dict)  # данные для обновления
+    status_updated = Signal(str)  # статус
+    error_occurred = Signal(str)  # ошибка
     
     def __init__(self):
+        super().__init__()
         self.serial_reader = None
         self.data_processor = DataProcessor()
         self.realtime_data = None
@@ -41,6 +47,8 @@ class FNIRSAnalyzer:
         self.error_callbacks.append(callback)
     
     def _notify_data_update(self, data: Dict[str, Any]):
+        self.data_updated.emit(data)
+        
         for callback in self.data_update_callbacks:
             try:
                 callback(data)
@@ -48,6 +56,8 @@ class FNIRSAnalyzer:
                 self.logger.error(f"Ошибка в колбэке обновления данных: {e}")
     
     def _notify_status_update(self, status: str):
+        self.status_updated.emit(status)
+        
         for callback in self.status_update_callbacks:
             try:
                 callback(status)
@@ -55,6 +65,8 @@ class FNIRSAnalyzer:
                 self.logger.error(f"Ошибка в колбэке статуса: {e}")
     
     def _notify_error(self, error_message: str):
+        self.error_occurred.emit(error_message)
+        
         for callback in self.error_callbacks:
             try:
                 callback(error_message)
@@ -97,7 +109,14 @@ class FNIRSAnalyzer:
         self.logger.info("Режим реального времени остановлен")
     
     def _on_serial_data(self, timestamp: float, pin: int, intensity: float):
-        pass
+        self.logger.info(f"Получены данные: время={timestamp}, пин={pin}, интенсивность={intensity}")
+        
+        data = {
+            'timestamp': timestamp,
+            'pin': pin,
+            'intensity': intensity
+        }
+        self._notify_data_update(data)
     
     def _on_serial_error(self, error_message: str):
         self._notify_error(error_message)
@@ -111,14 +130,14 @@ class FNIRSAnalyzer:
             return None
         
         raw_data = self.serial_reader.get_current_data()
-        if raw_data is None or len(raw_data['time']) < 5:
+        if raw_data is None or len(raw_data['time']) < 1:
             return None
         
         processed_data = self.data_processor.process_realtime_data(raw_data)
         if processed_data is None:
             return None
         
-        if len(processed_data['time']) > 10:
+        if len(processed_data['time']) > 5:
             processed_data['stats'] = self._get_realtime_stats(processed_data)
         
         self.realtime_data = processed_data
