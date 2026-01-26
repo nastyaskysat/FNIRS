@@ -6,12 +6,14 @@ SERIAL_CONFIG = {
 }
 
 ANALYSIS_CONFIG = {
-    'cutoff_frequency': 0.5, 
-    'sampling_rate': 10,      
-    'epsilon_hb_780': 0.15,  
-    'epsilon_hbo2_780': 0.08, 
-    'epsilon_hb_850': 0.06,  
-    'epsilon_hbo2_850': 0.12  
+    'cutoff_frequency': 0.5,
+    'sampling_rate': 10,
+    'epsilon_hb_780': 0.15,
+    'epsilon_hbo2_780': 0.08,
+    'epsilon_hb_850': 0.06,
+    'epsilon_hbo2_850': 0.12,
+    'source_detector_distance': 1.0,  # расстояние между источником и детектором (см)
+    'differential_pathlength_factor': 6.0  # дифференциальный путьовый фактор
 }
 
 UI_CONFIG = {

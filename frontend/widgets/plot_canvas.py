@@ -60,13 +60,31 @@ class PlotCanvas(FigureCanvas):
             ax.clear()
         
         ax1 = self.axes[0, 0]
-        ax1.plot(time, intensity_780, 'r-', label='780 нм (Pin 3)', alpha=0.8, linewidth=1.5)
-        ax1.plot(time, intensity_850, 'b-', label='850 нм (Pin 4)', alpha=0.8, linewidth=1.5)
+        ax1.plot(time, intensity_780, 'r-', label='780 нм (Pin 3)', alpha=0.8, linewidth=0.8)
+        ax1.plot(time, intensity_850, 'b-', label='850 нм (Pin 4)', alpha=0.8, linewidth=0.8)
         ax1.set_title('Интенсивность ИК излучения')
         ax1.set_xlabel('Время (с)')
         ax1.set_ylabel('Интенсивность')
-        ax1.legend()
+        ax1.legend(fontsize=8)
         ax1.grid(True, alpha=0.3)
+        
+        # Уменьшаем масштаб и ограничиваем количество отображаемых точек
+        if len(time) > 500:
+            step = max(1, len(time) // 200)  # Показываем примерно 200 точек
+            time_display = time[::step]
+            intensity_780_display = intensity_780[::step]
+            intensity_850_display = intensity_850[::step]
+            ax1.clear()
+            ax1.plot(time_display, intensity_780_display, 'r-', label='780 нм (Pin 3)', alpha=0.8, linewidth=0.8)
+            ax1.plot(time_display, intensity_850_display, 'b-', label='850 нм (Pin 4)', alpha=0.8, linewidth=0.8)
+            ax1.set_title('Интенсивность ИК излучения')
+            ax1.set_xlabel('Время (с)')
+            ax1.set_ylabel('Интенсивность')
+            ax1.legend(fontsize=8)
+            ax1.grid(True, alpha=0.3)
+            # Автоматическое масштабирование по Y
+            ax1.relim()
+            ax1.autoscale_view()
         
         ax2 = self.axes[0, 1]
         ax2.plot(time, Hb, 'b-', label='Деоксигенированный Hb', alpha=0.8, linewidth=1.5)
@@ -113,19 +131,37 @@ class PlotCanvas(FigureCanvas):
             ax.clear()
         
         ax1 = self.axes[0, 0]
-        ax1.plot(time, intensity_780, 'r-', label='780 нм (Pin 3)', alpha=0.8, linewidth=1.5)
-        ax1.plot(time, intensity_850, 'b-', label='850 нм (Pin 4)', alpha=0.8, linewidth=1.5)
-        ax1.set_title('Интенсивность ИК излучения (реальное время)')
+        ax1.plot(time, intensity_780, 'r-', label='780 нм (Pin 3)', alpha=0.8, linewidth=0.8)
+        ax1.plot(time, intensity_850, 'b-', label='850 нм (Pin 4)', alpha=0.8, linewidth=0.8)
+        ax1.set_title('Интенсивность ИК излучения')
         ax1.set_xlabel('Время (с)')
         ax1.set_ylabel('Интенсивность')
-        ax1.legend()
+        ax1.legend(fontsize=8)
         ax1.grid(True, alpha=0.3)
+        
+        # Для реального времени показываем только последние 50 точек
+        if len(time) > 50:
+            start_idx = len(time) - 50
+            time_display = time[start_idx:]
+            intensity_780_display = intensity_780[start_idx:]
+            intensity_850_display = intensity_850[start_idx:]
+            ax1.clear()
+            ax1.plot(time_display, intensity_780_display, 'r-', label='780 нм (Pin 3)', alpha=0.8, linewidth=0.8)
+            ax1.plot(time_display, intensity_850_display, 'b-', label='850 нм (Pin 4)', alpha=0.8, linewidth=0.8)
+            ax1.set_title('Интенсивность ИК излучения')
+            ax1.set_xlabel('Время (с)')
+            ax1.set_ylabel('Интенсивность')
+            ax1.legend(fontsize=8)
+            ax1.grid(True, alpha=0.3)
+            # Автоматическое масштабирование по Y
+            ax1.relim()
+            ax1.autoscale_view()
         
         ax2 = self.axes[0, 1]
         ax2.plot(time, Hb, 'b-', label='Деоксигенированный Hb', alpha=0.8, linewidth=1.5)
         ax2.plot(time, HbO2, 'r-', label='Оксигенированный Hb', alpha=0.8, linewidth=1.5)
         ax2.plot(time, total_Hb, 'purple', label='Общий Hb', alpha=0.8, linewidth=1.5)
-        ax2.set_title('Концентрации гемоглобина (реальное время)')
+        ax2.set_title('Концентрации гемоглобина')
         ax2.set_xlabel('Время (с)')
         ax2.set_ylabel('Концентрация (усл. ед.)')
         ax2.legend()
@@ -133,7 +169,7 @@ class PlotCanvas(FigureCanvas):
         
         ax3 = self.axes[1, 0]
         ax3.plot(time, saturation, 'g-', linewidth=2.0)
-        ax3.set_title('Сатурация крови (реальное время)')
+        ax3.set_title('Сатурация крови')
         ax3.set_xlabel('Время (с)')
         ax3.set_ylabel('Сатурация (%)')
         ax3.grid(True, alpha=0.3)
